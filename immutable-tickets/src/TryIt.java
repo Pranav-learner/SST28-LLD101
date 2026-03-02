@@ -4,31 +4,32 @@ import com.example.tickets.TicketService;
 import java.util.List;
 
 /**
- * Starter demo that shows why mutability is risky.
- *
- * After refactor:
- * - direct mutation should not compile (no setters)
- * - external modifications to tags should not affect the ticket
- * - service "updates" should return a NEW ticket instance
+ * Starter demo updated to show pristine immutability in action.
  */
 public class TryIt {
 
     public static void main(String[] args) {
         TicketService service = new TicketService();
 
-        IncidentTicket t = service.createTicket("TCK-1001", "reporter@example.com", "Payment failing on checkout");
-        System.out.println("Created: " + t);
+        IncidentTicket t1 = service.createTicket("TCK-1001", "reporter@example.com", "Payment failing on checkout");
+        System.out.println("Created: " + t1);
 
-        // Demonstrate post-creation mutation through service
-        service.assign(t, "agent@example.com");
-        service.escalateToCritical(t);
-        System.out.println("\nAfter service mutations: " + t);
+        // Updates must now capture the new instance returned by the service
+        IncidentTicket t2 = service.assign(t1, "agent@example.com");
+        IncidentTicket t3 = service.escalateToCritical(t2);
+        
+        System.out.println("\nOriginal ticket remains unchanged: " + t1);
+        System.out.println("New escalated ticket: " + t3);
 
-        // Demonstrate external mutation via leaked list reference
-        List<String> tags = t.getTags();
-        tags.add("HACKED_FROM_OUTSIDE");
-        System.out.println("\nAfter external tag mutation: " + t);
-
-        // Starter compiles; after refactor, you should redesign updates to create new objects instead.
+        // Demonstrate external mutation via leaked list reference is no longer possible
+        System.out.println("\nAttempting to mutate tags from the outside...");
+        List<String> tags = t3.getTags();
+        try {
+            tags.add("HACKED_FROM_OUTSIDE");
+        } catch (UnsupportedOperationException e) {
+            System.out.println("Nice! Caught UnsupportedOperationException: List is unmodifiable.");
+        }
+        
+        System.out.println("Final state of escalated ticket tags: " + t3.getTags());
     }
 }
